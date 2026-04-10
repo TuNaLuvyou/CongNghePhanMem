@@ -1,65 +1,148 @@
-import Image from "next/image";
+"use client";
+import React, { useState } from 'react';
+import { Plus, Calendar as CalendarIcon, CheckSquare, Clock, Lightbulb, MapPin, Users } from 'lucide-react';
+import MiniCalendar from '../components/MiniCalendar';
+import Calendar from '../components/Calendar';
 
-export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+export default function CalendarApp() {
+    const now = new Date();
+    const [view, setView] = useState("Tuần");
+    const [viewDate, setViewDate] = useState(now);
+    const [selectedDate, setSelectedDate] = useState(now);
+    const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
+
+    // Ghi nhớ ngày bấm cuối ở MiniCalendar để xử lý "bấm thêm lần nữa"
+    const [lastMiniClick, setLastMiniClick] = useState(null);
+
+    const handleMiniDayClick = (clickedDate) => {
+        const isSameDate = lastMiniClick &&
+            clickedDate.toDateString() === lastMiniClick.toDateString();
+
+        setLastMiniClick(clickedDate);
+        setSelectedDate(clickedDate);
+
+        if (view === "Ngày") {
+            setViewDate(clickedDate);
+
+        } else if (view === "Tuần") {
+            if (isSameDate) {
+                // Bấm thêm lần nữa → hiện chi tiết ngày
+                setView("Ngày");
+                setViewDate(clickedDate);
+            } else {
+                // Lần đầu → nhảy đến tuần chứa ngày đó
+                setViewDate(clickedDate);
+            }
+
+        } else if (view === "Tháng") {
+            if (isSameDate) {
+                // Bấm thêm lần nữa → hiện tuần chứa ngày đó
+                setView("Tuần");
+                setViewDate(clickedDate);
+            } else {
+                // Lần đầu → nhảy đến tháng chứa ngày đó
+                setViewDate(clickedDate);
+            }
+
+        } else if (view === "Năm") {
+            setView("Tháng");
+            setViewDate(clickedDate);
+        }
+    };
+
+    return (
+        <div className="flex h-screen bg-white text-slate-800 font-sans overflow-hidden">
+
+            {/* SIDEBAR */}
+            <aside className="w-72 flex-shrink-0 border-r border-slate-200 flex flex-col bg-slate-50/50">
+                <div className="h-16 flex items-center px-6 border-b border-slate-200">
+                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3 shadow-sm">
+                        <CalendarIcon className="w-5 h-5 text-white" />
+                    </div>
+                    <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+                        Lịch Của Tôi
+                    </span>
+                </div>
+
+                <div className="p-5 flex-1 overflow-y-auto">
+                    <div className="relative mb-8">
+                        <button
+                            onClick={() => setIsCreateMenuOpen(!isCreateMenuOpen)}
+                            className="flex items-center justify-center w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-xl font-medium transition-all shadow-sm active:scale-95"
+                        >
+                            <Plus className="w-5 h-5 mr-2" /> Tạo mới
+                        </button>
+                        {isCreateMenuOpen && (
+                            <div className="absolute top-14 left-0 w-full bg-white rounded-xl shadow-lg border border-slate-100 py-2 z-50">
+                                <button className="w-full text-left px-4 py-2.5 hover:bg-slate-50 flex items-center text-sm text-slate-700">
+                                    <CalendarIcon className="w-4 h-4 mr-3 text-blue-500" /> Sự kiện
+                                </button>
+                                <button className="w-full text-left px-4 py-2.5 hover:bg-slate-50 flex items-center text-sm text-slate-700">
+                                    <CheckSquare className="w-4 h-4 mr-3 text-emerald-500" /> Việc cần làm
+                                </button>
+                                <button className="w-full text-left px-4 py-2.5 hover:bg-slate-50 flex items-center text-sm text-slate-700">
+                                    <Clock className="w-4 h-4 mr-3 text-purple-500" /> Lên lịch hẹn
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    <MiniCalendar
+                        onDayClick={handleMiniDayClick}
+                        viewDate={viewDate}
+                        selectedDate={selectedDate}
+                        currentView={view}
+                    />
+
+                    <hr className="border-slate-200 my-6" />
+
+                    <div>
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Lịch của tôi</h3>
+                        <div className="space-y-2">
+                            <label className="flex items-center space-x-3 cursor-pointer">
+                                <input type="checkbox" defaultChecked className="w-4 h-4 text-blue-600" />
+                                <span className="text-sm">Cá nhân</span>
+                            </label>
+                            <label className="flex items-center space-x-3 cursor-pointer">
+                                <input type="checkbox" defaultChecked className="w-4 h-4 text-purple-600" />
+                                <span className="text-sm">Công việc</span>
+                            </label>
+                            <label className="flex items-center space-x-3 cursor-pointer">
+                                <input type="checkbox" defaultChecked className="w-4 h-4 text-emerald-600" />
+                                <span className="text-sm">Gia đình</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            {/* MAIN */}
+            <main className="flex-1 overflow-x-auto overflow-y-hidden bg-white relative">
+                <Calendar
+                    view={view} setView={setView}
+                    viewDate={viewDate} setViewDate={setViewDate}
+                    selectedDate={selectedDate} setSelectedDate={setSelectedDate}
+                />
+            </main>
+
+            {/* RIGHT SIDEBAR */}
+            <aside className="w-14 flex-shrink-0 border-l border-slate-200 bg-white flex flex-col items-center py-4 space-y-6 z-10 shadow-sm">
+                <button className="p-2.5 hover:bg-slate-100 rounded-full transition-colors text-blue-600"><CheckSquare className="w-5 h-5" /></button>
+                <button className="p-2.5 hover:bg-slate-100 rounded-full transition-colors text-yellow-500"><Lightbulb className="w-5 h-5" /></button>
+                <button className="p-2.5 hover:bg-slate-100 rounded-full transition-colors text-red-500"><MapPin className="w-5 h-5" /></button>
+                <button className="p-2.5 hover:bg-slate-100 rounded-full transition-colors text-emerald-600"><Users className="w-5 h-5" /></button>
+                <div className="w-6 h-px bg-slate-200 my-2"></div>
+                <button className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400"><Plus className="w-5 h-5" /></button>
+            </aside>
+
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                    .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+                    .custom-scrollbar::-webkit-scrollbar-track { background: #f8fafc; }
+                    .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+                    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background-color: #94a3b8; }
+                `
+            }} />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+    );
 }
