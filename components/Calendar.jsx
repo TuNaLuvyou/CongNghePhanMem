@@ -1,7 +1,8 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import TimeGrid from "./TimeGrid";
-import { ChevronLeft, ChevronRight, Search, Bell, Settings, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, Bell, Settings, Trash2, LogOut } from "lucide-react";
+import AuthModal from "./AuthModal";
 
 // ─── Hằng số ─────────────────────────────────────────────────────────────────
 const VI_DAY_NAMES = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
@@ -107,6 +108,10 @@ export default function Calendar({
     const now = new Date();
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const settingsRef = useRef(null);
+    const [authModal, setAuthModal] = useState({ isOpen: false, type: 'login' });
+
+    // State lưu trữ thông tin người dùng đang đăng nhập
+    const [currentUser, setCurrentUser] = useState(null);
 
     useEffect(() => {
         const handler = (e) => {
@@ -176,46 +181,85 @@ export default function Calendar({
                     <h1 className="text-xl font-semibold text-slate-800">{headerTitle()}</h1>
                 </div>
 
-                <div className="flex items-center space-x-3">
-                    <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition">
-                        <Search className="w-5 h-5" />
-                    </button>
-                    <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition">
-                        <Bell className="w-5 h-5" />
-                    </button>
+                {/* Nhóm bên phải */}
+                <div className="flex items-center gap-4">
 
-                    {/* Settings */}
-                    <div className="relative" ref={settingsRef}>
-                        <button
-                            onClick={() => setIsSettingsOpen(v => !v)}
-                            className={`p-2 rounded-full transition hover:bg-slate-100 ${isSettingsOpen ? 'text-slate-700 bg-slate-100' : 'text-slate-400 hover:text-slate-600'}`}
-                        >
-                            <Settings className="w-5 h-5" />
+                    {/* Các icon */}
+                    <div className="flex items-center gap-1 text-slate-500">
+                        <button className="p-2 hover:text-slate-700 hover:bg-slate-100 rounded-full transition">
+                            <Search className="w-5 h-5" />
                         </button>
-                        {isSettingsOpen && (
-                            <div className="absolute right-0 top-10 w-44 bg-white rounded-xl shadow-lg border border-slate-100 py-1.5 z-50">
-                                <button className="w-full text-left px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm text-slate-700">
-                                    <Settings className="w-4 h-4 text-slate-400" /> Cài đặt
-                                </button>
-                                <div className="my-1 border-t border-slate-100" />
-                                <button className="w-full text-left px-4 py-2.5 hover:bg-red-50 flex items-center gap-3 text-sm text-red-500">
-                                    <Trash2 className="w-4 h-4" /> Thùng rác
-                                </button>
-                            </div>
-                        )}
+                        <button className="p-2 hover:text-slate-700 hover:bg-slate-100 rounded-full transition">
+                            <Bell className="w-5 h-5" />
+                        </button>
+
+                        <div className="relative" ref={settingsRef}>
+                            <button
+                                onClick={() => setIsSettingsOpen(v => !v)}
+                                className={`p-2 rounded-full transition hover:bg-slate-100 ${isSettingsOpen ? 'text-slate-700 bg-slate-100' : 'hover:text-slate-700'}`}
+                            >
+                                <Settings className="w-5 h-5" />
+                            </button>
+                            {isSettingsOpen && (
+                                <div className="absolute right-0 top-10 w-44 bg-white rounded-xl shadow-lg border border-slate-100 py-1.5 z-50">
+                                    <button className="w-full text-left px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm text-slate-700">
+                                        <Settings className="w-4 h-4 text-slate-400" /> Cài đặt
+                                    </button>
+                                    <div className="my-1 border-t border-slate-100" />
+                                    <button className="w-full text-left px-4 py-2.5 hover:bg-red-50 flex items-center gap-3 text-sm text-red-500">
+                                        <Trash2 className="w-4 h-4" /> Thùng rác
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
-                    <div className="h-6 w-px bg-slate-200 mx-1"></div>
+                    {/* Select view */}
                     <select
                         value={view}
                         onChange={(e) => setView(e.target.value)}
-                        className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg p-2 outline-none cursor-pointer hover:bg-slate-100 focus:ring-2 focus:ring-blue-500 transition"
+                        className="h-9 px-3 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg outline-none cursor-pointer hover:bg-slate-100 focus:ring-2 focus:ring-blue-500 transition"
                     >
                         <option value="Ngày">Ngày</option>
                         <option value="Tuần">Tuần</option>
                         <option value="Tháng">Tháng</option>
                         <option value="Năm">Năm</option>
                     </select>
+
+                    {/* Khu vực Auth (Hiển thị User hoặc Nút Đăng nhập/Đăng ký) */}
+                    {currentUser ? (
+                        <div className="flex items-center gap-3 h-9 px-3 bg-white border border-slate-200 rounded-lg shadow-sm">
+                            <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xs font-bold">
+                                {currentUser.charAt(0).toUpperCase()}
+                            </div>
+                            <span className="text-sm text-slate-600">
+                                Xin Chào, <span className="font-bold text-blue-600">{currentUser}</span>
+                            </span>
+                            <div className="w-px h-4 bg-slate-200 mx-1"></div>
+                            <button
+                                onClick={() => setCurrentUser(null)}
+                                className="text-slate-400 hover:text-red-500 transition-colors"
+                                title="Đăng xuất"
+                            >
+                                <LogOut className="w-4 h-4" />
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setAuthModal({ isOpen: true, type: 'login' })}
+                                className="h-9 px-4 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+                            >
+                                Đăng nhập
+                            </button>
+                            <button
+                                onClick={() => setAuthModal({ isOpen: true, type: 'register' })}
+                                className="h-9 px-4 flex items-center justify-center bg-white text-blue-600 border border-blue-600 hover:bg-blue-50 text-sm font-medium rounded-lg transition-colors box-border"
+                            >
+                                Đăng ký
+                            </button>
+                        </div>
+                    )}
                 </div>
             </header>
 
@@ -318,6 +362,18 @@ export default function Calendar({
                     </>
                 )}
             </div>
+
+            {/* Truyền prop onLoginSuccess để Form biết đường báo về */}
+            <AuthModal
+                isOpen={authModal.isOpen}
+                type={authModal.type}
+                onClose={() => setAuthModal({ ...authModal, isOpen: false })}
+                onSwitchType={(newType) => setAuthModal({ isOpen: true, type: newType })}
+                onLoginSuccess={(username) => {
+                    setCurrentUser(username);
+                    setAuthModal({ ...authModal, isOpen: false });
+                }}
+            />
         </div>
     );
 }
